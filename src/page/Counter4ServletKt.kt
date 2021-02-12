@@ -8,8 +8,7 @@ import com.google.gson.Gson
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.google.gson.reflect.TypeToken
-import utils.jsonevalutils.JSonEval
-import java.io.IOException
+import utils.JSonEvalUtils.JSonEval
 import java.text.SimpleDateFormat
 import java.util.*
 import javax.servlet.*
@@ -17,6 +16,29 @@ import javax.servlet.annotation.WebServlet
 
 @WebServlet(name = "page.Counter4ServletKt")
 class Counter4ServletKt : Servlet {
+
+
+
+    companion object {
+        private const val path = "/usr/local/tomcat/tomcat-8.5/webapps/mweb/sav/msav.txt"
+
+        //private static String path="D:/sav/msav.txt";
+        //private static String logPath="D:/sav/";
+        private const val logPath = "/usr/local/tomcat/tomcat-8.5/webapps/mweb/sav/"
+        private const val enter = '\n'
+        private const val emptyUsrPic = "https://huaban.com/img/error_page/img_404.png"
+        private var lastInfo = "null"
+        private const val announcement = "[7月17日更新]祝红岩的学长学姐们，学业进步，考研成功，面试顺利！！！"
+        private fun timestampToDateStr(timeStamp: Long): String {
+            val timeString: String
+            val sdf = SimpleDateFormat("yyyy年MM月dd日ahh点")
+            timeString = sdf.format(Date(timeStamp)) //单位秒
+            return timeString
+        }
+    }
+
+
+
     private var servletConfig: ServletConfig? = null
     private var random: Random? = null
 
@@ -384,12 +406,12 @@ class Counter4ServletKt : Servlet {
 
     //===========================================================================
     @kotlin.Throws(ServletException::class)
-    override fun init(arg0: ServletConfig) {
+    override fun init(arg0: ServletConfig?) {
         random = Random()
         accounts = ArrayList()
         accounts!!.add(Account("admin", "管理员", "sandyzhang", "男", "无敌是多么寂寞", -1, emptyUsrPic))
         talkList = ArrayList()
-        servletConfig = getServletConfig()
+        servletConfig = arg0
         //
 //        try{
 //            File f = new File(path);
@@ -616,29 +638,14 @@ class Counter4ServletKt : Servlet {
 //        }
     }
 
-    override fun getServletConfig(): ServletConfig {
+
+    override fun getServletConfig(): ServletConfig? {
+        return servletConfig
+    }
+
+    override fun getServletInfo(): String? {
         return null!!
     }
 
-    override fun getServletInfo(): String {
-        return null!!
-    }
 
-    companion object {
-        private const val path = "/usr/local/tomcat/tomcat-8.5/webapps/mweb/sav/msav.txt"
-
-        //private static String path="D:/sav/msav.txt";
-        //private static String logPath="D:/sav/";
-        private const val logPath = "/usr/local/tomcat/tomcat-8.5/webapps/mweb/sav/"
-        private const val enter = '\n'
-        private const val emptyUsrPic = "https://huaban.com/img/error_page/img_404.png"
-        private var lastInfo = "null"
-        private const val announcement = "[7月17日更新]祝红岩的学长学姐们，学业进步，考研成功，面试顺利！！！"
-        private fun timestampToDateStr(timeStamp: Long): String {
-            val timeString: String
-            val sdf = SimpleDateFormat("yyyy年MM月dd日ahh点")
-            timeString = sdf.format(Date(timeStamp)) //单位秒
-            return timeString
-        }
-    }
 }

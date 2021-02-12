@@ -7,7 +7,7 @@
 
     <servlet>
         <servlet-name>Counter4</servlet-name>
-        <servlet-class>Counter4Servlet</servlet-class>
+        <servlet-class>page.Counter4ServletKt</servlet-class>
     </servlet>
 
     <servlet-mapping>
