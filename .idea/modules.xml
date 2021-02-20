@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/CounterService.iml" filepath="$PROJECT_DIR$/CounterService.iml" />
+      <module fileurl="file://$PROJECT_DIR$/MagicMirrorService.iml" filepath="$PROJECT_DIR$/MagicMirrorService.iml" />
     </modules>
   </component>
 </project>

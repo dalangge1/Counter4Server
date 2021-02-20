@@ -16,4 +16,15 @@
     </servlet-mapping>
 
 
+    <servlet>
+        <servlet-name>Counter4Sql</servlet-name>
+        <servlet-class>page.Counter4ServletKtSql</servlet-class>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>Counter4Sql</servlet-name>
+        <url-pattern>/Counter4Sql</url-pattern>
+    </servlet-mapping>
+
+
 </web-app>

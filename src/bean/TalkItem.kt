@@ -1,14 +1,14 @@
 package bean
 
-import page.Counter4ServletKt
-import java.util.ArrayList
+import java.util.*
 
-class TalkItem(var time: Long, var accountNum: String, var picUrl: String, var text: String) {
-    var replies: ArrayList<TalkItem>
-    var likeAccounts: ArrayList<Account>
+class TalkItem(
+        var time: Long,
+        var accountNum: String,
+        var picUrl: String,
+        var text: String
+        ) {
+    var replies: ArrayList<TalkItem> = ArrayList()
+    var likeAccounts: ArrayList<Account> = ArrayList()
 
-    init {
-        replies = ArrayList()
-        likeAccounts = ArrayList()
-    }
 }

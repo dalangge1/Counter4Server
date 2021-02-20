@@ -8,20 +8,22 @@ import com.google.gson.Gson
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.google.gson.reflect.TypeToken
+import java.sql.DriverManager
 import java.text.SimpleDateFormat
 import java.util.*
 import javax.servlet.*
 import javax.servlet.annotation.WebServlet
 import javax.servlet.http.HttpServletRequest
 
-@WebServlet(name = "page.Counter4ServletKt")
-class Counter4ServletKt : Servlet {
+@WebServlet(name = "page.Counter4ServletKtSql")
+class Counter4ServletKtSql : Servlet {
 
 
     companion object {
         private const val emptyUsrPic = "https://huaban.com/img/error_page/img_404.png"
         private var lastInfo = "null"
         private const val announcement = "[7月17日更新]祝红岩的学长学姐们，学业进步，考研成功，面试顺利！！！"
+
         private fun timestampToDateStr(timeStamp: Long): String {
             val timeString: String
             val sdf = SimpleDateFormat("yyyy年MM月dd日ahh点")
@@ -84,7 +86,7 @@ class Counter4ServletKt : Servlet {
             //            JsonParser parser = new JsonParser();
             //            JsonArray jsonArray = parser.parse(dataString).getAsJsonArray();
             val dataItem: DataItem = Gson().fromJson(dataString, DataItem::class.java)
-                    //JSonEval.getInstance().fromJson(dataString, DataItem::class.java)
+            //JSonEval.getInstance().fromJson(dataString, DataItem::class.java)
             accounts!![pos].dataItems.add(dataItem)
             1
         } catch (e: Exception) {
@@ -506,3 +508,4 @@ class Counter4ServletKt : Servlet {
 
 
 }
+
