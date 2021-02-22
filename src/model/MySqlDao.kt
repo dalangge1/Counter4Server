@@ -4,6 +4,7 @@ import beannew.DynamicItem
 import beannew.User
 import java.lang.Exception
 import java.sql.DriverManager
+import java.sql.ResultSet
 import java.sql.Statement
 
 
@@ -113,23 +114,79 @@ object MySqlDao {
         return statement.updateCount != 0
     }
 
+    fun releaseDynamic(token: Int, text: String, topic: String, vararg picUrl: String): Int {
+        val user = getUser(token)?: return -3
 
-    fun getAllDynamic(): List<DynamicItem> {
-        val resultSet = statement.executeQuery("SELECT * FROM `dynamic_list`;")
-        val list = ArrayList<DynamicItem>()
-        while (resultSet.next()) {
+        var id = -1
+        // 发布动态
+        try {
+            statement.execute("INSERT INTO dynamic_list " +
+                    "(user_id, text, topic, submit_time) " +
+                    "VALUES " +
+                    "('${user.userId}', '$text', '$topic', NOW());", Statement.RETURN_GENERATED_KEYS)
 
-            list.add(
-                    DynamicItem(
-                            dynamicId = resultSet.getInt(1),
-                            userId = resultSet.getString(2),
-                            submitTime = resultSet.getTimestamp(3).time,
-                            text = resultSet.getString(4)
-                    )
-            )
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return -1
         }
 
-        resultSet.close()
+
+
+        // 找到刚刚插入的动态的id
+        val rs = statement.generatedKeys
+        if (rs.next()) {
+            id = rs.getInt(1)
+        }
+
+        if (id == -1) {
+            return -2
+        }
+        picUrl.forEach {
+            statement.execute("INSERT INTO pic_list " +
+                    "(dynamic_id, pic_url) " +
+                    "VALUES " +
+                    "('${id}', '${it}');")
+        }
+        // 插入图片
+        try {
+
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return -2
+        }
+
+        return id
+    }
+
+
+    fun getAllDynamic(pos: Int, size: Int, topic: String?): List<DynamicItem>? {
+
+        val list = ArrayList<DynamicItem>()
+        try {
+            val resultSet: ResultSet = if (topic == null) {
+                statement.executeQuery("SELECT * FROM `dynamic_list` order by dynamic_id desc limit $pos,$size;")
+            } else {
+                statement.executeQuery("SELECT * FROM `dynamic_list` where topic='$topic' order by dynamic_id desc limit $pos,$size;")
+            }
+
+            while (resultSet.next()) {
+
+                list.add(
+                        DynamicItem(
+                                dynamicId = resultSet.getInt(1),
+                                userId = resultSet.getString(2),
+                                submitTime = resultSet.getTimestamp(3).time,
+                                text = resultSet.getString(4)
+                        )
+                )
+
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return null
+        }
+
+
         return list
     }
 
