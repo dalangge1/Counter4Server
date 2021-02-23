@@ -33,31 +33,21 @@ fun initSql(statement: Statement) {
                     "   PRIMARY KEY ( `dynamic_id` )\n" +
                     ")ENGINE=InnoDB DEFAULT CHARSET=utf8;")
 
-    // 帖子一级回复列表
+    // 帖子回复列表（包括一级二级）
     statement.execute(
             "CREATE TABLE IF NOT EXISTS `comment_list`(\n" +
 
-                    "   `dynamic_id` INT UNSIGNED,\n" +                     // 回复的动态id
+                    "   `reply_id` INT UNSIGNED,\n" +                     // 回复的动态id、一级评论
                     "   `id` INT UNSIGNED AUTO_INCREMENT,\n" +              // 本条id
                     "   `user_id` VARCHAR(30) NOT NULL,\n" +                // 发布人id
                     "   `submit_time` TIMESTAMP,\n" +                            // 发布时间
                     "   `text` VARCHAR(3000) NOT NULL,\n" +                 // 内容
+                    "   `which` INT UNSIGNED,\n" +                     // 1是一级评论，2是二级评论
+                    "   `reply_user_id` VARCHAR(30) NOT NULL,\n" +     // 为空是普通二级评论，有则为二级评论的回复
 
-                    "   PRIMARY KEY ( `id` )\n" +
+                    "   PRIMARY KEY ( `id`, `which` )\n" +              // 这里id自增，在which不同的情况下。也就是说一二级评论的id可以相同
                     ")ENGINE=InnoDB DEFAULT CHARSET=utf8;")
 
-    // 帖子二级回复列表
-    statement.execute(
-            "CREATE TABLE IF NOT EXISTS `reply_list`(\n" +
-
-                    "   `reply_id` INT UNSIGNED,\n" +                       // 回复的一级id
-                    "   `id` INT UNSIGNED AUTO_INCREMENT,\n" +              // 本条id
-                    "   `user_id` VARCHAR(30) NOT NULL,\n" +                // 发布人id
-                    "   `submit_time` TIMESTAMP,\n" +                            // 发布时间
-                    "   `text` VARCHAR(3000) NOT NULL,\n" +                 // 内容
-
-                    "   PRIMARY KEY ( `id` )\n" +
-                    ")ENGINE=InnoDB DEFAULT CHARSET=utf8;")
 
     // 图片列表
     statement.execute(
@@ -76,6 +66,17 @@ fun initSql(statement: Statement) {
                     "   `followed_user_id` VARCHAR(3000) NOT NULL,\n" +    // 关注的用户id，用分号分割
 
                     "   PRIMARY KEY ( `user_id` )\n" +
+                    ")ENGINE=InnoDB DEFAULT CHARSET=utf8;")
+
+    // 点赞列表
+    statement.execute(
+            "CREATE TABLE IF NOT EXISTS `praise_list`(\n" +
+
+                    "   `id` INT UNSIGNED,\n" +               // 点赞的id
+                    "   `user_id` VARCHAR(30) NOT NULL,\n" +  // 关注的用户id，用分号分割
+                    "   `which` INT UNSIGNED,\n" +            // 0是动态，1是一级评论，2是二级评论
+
+                    "   PRIMARY KEY ( `id`, `which`)\n" +
                     ")ENGINE=InnoDB DEFAULT CHARSET=utf8;")
 
 

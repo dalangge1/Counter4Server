@@ -3,9 +3,7 @@ package page
 import beannew.ApiWrapper
 import beannew.InfoWrapper
 import beannew.Token
-import com.google.gson.Gson
-import model.MySqlDao
-import org.omg.CORBA.INTERNAL
+import model.Dao
 import java.lang.Exception
 import javax.servlet.*
 import javax.servlet.annotation.WebServlet
@@ -41,9 +39,9 @@ class Counter4ServletKtSql : Servlet {
             if (userId.isNullOrBlank() || password.isNullOrBlank()) {
                 out.println(InfoWrapper.newInfo(info = "用户名或密码不能为空"))
             }
-            val isSuccess = MySqlDao.register(userId, password)
+            val isSuccess = Dao.register(userId, password)
             if (isSuccess) {
-                out.println(InfoWrapper.newInfo(info = "注册成功"))
+                out.println(InfoWrapper.newInfo(status = 200, info = "注册成功"))
             } else {
                 out.println(InfoWrapper.newInfo(info = "注册失败"))
             }
@@ -55,9 +53,9 @@ class Counter4ServletKtSql : Servlet {
             if (userId.isNullOrBlank() || password.isNullOrBlank()) {
                 out.println(InfoWrapper.newInfo(info = "用户名或密码不能为空"))
             }
-            val token = MySqlDao.login(userId, password)
+            val token = Dao.login(userId, password)
             if (token != -1) {
-                out.println(ApiWrapper.newApi(info = "登录成功", data = Token(token)))
+                out.println(ApiWrapper.newApi(status = 200, info = "登录成功", data = Token(token)))
             } else {
                 out.println(InfoWrapper.newInfo(info = "登录失败"))
             }
@@ -69,9 +67,9 @@ class Counter4ServletKtSql : Servlet {
             val picUrls = request.getParameter("pic_url")?.split(",")
             tokenGlobal?.let {
                 val dynamicId: Int = if (picUrls != null) {
-                    MySqlDao.releaseDynamic(it.toInt(), text, topic, *picUrls.toTypedArray())
+                    Dao.releaseDynamic(it.toInt(), text, topic, *picUrls.toTypedArray())
                 } else {
-                    MySqlDao.releaseDynamic(it.toInt(), text, topic)
+                    Dao.releaseDynamic(it.toInt(), text, topic)
                 }
                 when (dynamicId) {
                     -1 -> {
@@ -84,7 +82,7 @@ class Counter4ServletKtSql : Servlet {
                         out.println(InfoWrapper.newInfo(info = "token过期"))
                     }
                     else -> {
-                        out.println(ApiWrapper.newApi(info = "发送动态成功", data = dynamicId))
+                        out.println(ApiWrapper.newApi(status = 200, info = "发送动态成功", data = dynamicId))
                     }
                 }
 
@@ -103,12 +101,29 @@ class Counter4ServletKtSql : Servlet {
                 out.println(InfoWrapper.newInfo(info = "参数格式有误"))
                 return
             }
-            MySqlDao.getAllDynamic(pos, size, topic)?.let {
-                out.println(ApiWrapper.newApi(info = "获取成功", data = it))
+            Dao.getAllDynamic(pos, size, topic)?.let {
+                out.println(ApiWrapper.newApi(status = 200, info = "获取成功", data = it))
                 return
             }
             out.println(InfoWrapper.newInfo(info = "获取失败"))
 
+
+        }
+
+
+        if (action == "deleteDynamic") {
+            val dynamicId: Int
+            try {
+                dynamicId = (request.getParameter("dynamic_id") ?: "0").toInt()
+            } catch (e: Exception) {
+                out.println(InfoWrapper.newInfo(info = "参数格式有误"))
+                return
+            }
+            if (Dao.deleteDynamic(dynamicId)) {
+                out.println(InfoWrapper.newInfo(status = 200, info = "删除成功"))
+            } else {
+                out.println(InfoWrapper.newInfo(info = "删除失败"))
+            }
 
         }
 

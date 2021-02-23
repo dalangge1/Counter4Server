@@ -15,6 +15,12 @@ data class DynamicItem(
         @SerializedName("nickname")
         val nickname: String = "",
         @SerializedName("avatar_url")
-        val avatarUrl: String = ""
+        val avatarUrl: String = "",
+
+        @SerializedName("pic_url")
+        val picUrl: List<String> = listOf(),
+
+        @SerializedName("comment_list")
+        val commentList: List<CommentItem> = listOf()
 
 )
