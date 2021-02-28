@@ -22,13 +22,12 @@ object Dao {
 
     init {
 
-        Class.forName(JDBC_DRIVER);
-        conn = DriverManager.getConnection(DB_URL, "root", "7424855920");
+        Class.forName(JDBC_DRIVER)
+        conn = DriverManager.getConnection(DB_URL, "root", "7424855920")
         conn.createStatement().execute("CREATE DATABASE IF NOT EXISTS counter4_database DEFAULT CHARSET utf8 COLLATE utf8_general_ci;")
 
         // 执行数据库的初始化
         initSql(statement)
-
 
 
     }
@@ -56,7 +55,7 @@ object Dao {
         return getUserId(token)?.let { getUser(it) }
     }
 
-    private fun getUser(userId: String): User? {
+    fun getUser(userId: String): User? {
 
         try {
             val resultSet = statement.executeQuery("SELECT * FROM user_list WHERE user_id='$userId';")
@@ -64,7 +63,7 @@ object Dao {
                 return User(
                         userId = resultSet.getString(1),
                         nickname = resultSet.getString(2),
-                        password = resultSet.getString(3),
+//                        password = resultSet.getString(3),
                         registerDate = resultSet.getTimestamp(4).time,
                         sex = resultSet.getString(5),
                         text = resultSet.getString(6),
@@ -120,7 +119,7 @@ object Dao {
      * 注册，传入用户名和密码
      */
     fun register(userId: String, password: String): Boolean {
-        var count: Int = 0
+        var count: Int
         try {
             statement.apply {
                 execute("INSERT INTO user_list " +
@@ -146,14 +145,14 @@ object Dao {
      */
 
     fun releaseDynamic(token: Int, text: String, topic: String, vararg picUrl: String): Int {
-        val user = getUser(token)?: return -3
+        val user = getUser(token) ?: return -3
 
         var id = -1
-        var rs: ResultSet? = null
+        var rs: ResultSet?
         // 发布动态
         try {
             statement.apply {
-                execute("INSERT INTO dynamic_list " +
+                execute("INSERT INTO `dynamic_list` " +
                         "(user_id, text, topic, submit_time) " +
                         "VALUES " +
                         "('${user.userId}', '$text', '$topic', NOW());", Statement.RETURN_GENERATED_KEYS)
@@ -166,7 +165,7 @@ object Dao {
         }
 
 
-        rs?: return -2
+        rs ?: return -2
 
         if (rs!!.next()) {
             id = rs!!.getInt(1)
@@ -196,15 +195,61 @@ object Dao {
 //        val clazz: Class<T> = T::class.java
 //    }
     /**
-     * @param which 获取一级还是二级评论
+     * 点赞/取消点赞
      */
-    private fun getCommentList(id: Int, which: Int): List<CommentItem> {
+    fun reversePraise(token: Int, id: Int, which: Int): Boolean {
+        try {
+            val count = statement.executeUpdate("DELETE FROM `praise_list` where which='$which' and id='$id';")
+            if (count != 0) {
+                return true
+            } else {
+                throw Exception()
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            // 如果没有点赞则添加点赞记录
+            try {
+                val userId = getUser(token)?.userId
+                if (userId.isNullOrBlank()) {
+                    return false
+                }
+                val count2 = statement.executeUpdate("INSERT INTO `praise_list` (id, user_id, which) VALUES ('$id', '$userId', '$which');")
+                return count2 != 0
+            } catch (e: Exception) {
+                e.printStackTrace()
+                return false
+            }
+        }
+
+    }
+
+    /**
+     * 获得点赞的user列表
+     */
+    private fun getPraise(id: Int, which: Int): List<User> {
+        val list = ArrayList<User>()
+        val resultSet: ResultSet = statement.executeQuery("SELECT * FROM `praise_list` where id='$id' and which='$which';")
+        while (resultSet.next()) {
+            val user = getUser(resultSet.getString(2))
+            if (user != null) {
+                list.add(user)
+            }
+        }
+        return list
+    }
+
+    /**
+     * @param which 获取一级还是二级评论
+     * @param replyId 被回复的id，会根据id寻找
+     */
+    private fun getCommentList(replyId: Int, which: Int): List<CommentItem> {
         val list = ArrayList<CommentItem>()
         try {
-            val resultSet: ResultSet = statement.executeQuery("SELECT * FROM `comment_list` where reply_id=$id and which=$which;")
+            val resultSet: ResultSet = statement.executeQuery("SELECT * FROM `comment_list` where reply_id='$replyId' and which='$which';")
 
             while (resultSet.next()) {
                 val user = getUser(resultSet.getString(3))
+                val praiseList = getPraise(resultSet.getInt(2), which)
                 val currentId = resultSet.getInt(2) // 当前评论的id
                 val replyList = if (which == 1) { // 获得当前评论的回复列表
                     getCommentList(currentId, 2)
@@ -220,12 +265,14 @@ object Dao {
                                 userId = resultSet.getString(3),
                                 submitTime = resultSet.getTimestamp(4).time,
                                 text = resultSet.getString(5),
-                                nickname = user?.nickname?: "",
-                                avatarUrl = user?.avatarUrl?: "",
+                                nickname = user?.nickname ?: "",
+                                avatarUrl = user?.avatarUrl ?: "",
                                 which = resultSet.getInt(6),
                                 replyUserNickname = resultSet.getString(7),
 
-                                replyList = replyList
+                                replyList = replyList,
+
+                                praise = praiseList
                         )
                 )
 
@@ -257,6 +304,7 @@ object Dao {
             while (resultSet.next()) {
                 val user = getUser(resultSet.getString(2))
                 val picList = getPicList(resultSet.getInt(1))
+                val praiseList = getPraise(resultSet.getInt(1), 0)
                 val commentList = getCommentList(resultSet.getInt(1), 1)
 
                 list.add(
@@ -265,11 +313,13 @@ object Dao {
                                 userId = resultSet.getString(2),
                                 submitTime = resultSet.getTimestamp(3).time,
                                 text = resultSet.getString(4),
-                                nickname = user?.nickname?: "",
-                                avatarUrl = user?.avatarUrl?: "",
+                                nickname = user?.nickname ?: "",
+                                avatarUrl = user?.avatarUrl ?: "",
                                 picUrl = picList,
 
-                                commentList = commentList
+                                commentList = commentList,
+
+                                praise = praiseList
                         )
                 )
 
@@ -288,7 +338,7 @@ object Dao {
      */
     fun deleteDynamic(dynamicId: Int): Boolean {
         return try {
-            val count = statement.executeUpdate("DELETE FROM `dynamic_list` where dynamic_id=$dynamicId;")
+            val count = statement.executeUpdate("DELETE FROM `dynamic_list` where dynamic_id='$dynamicId';")
 //            // 删除附属图片
 //            statement.executeUpdate("DELETE FROM `pic_list` where dynamic_id=$dynamicId;")
 //            // 删除一级评论
@@ -315,7 +365,7 @@ object Dao {
      */
     fun deleteComment(id: Int, which: Int): Boolean {
         return try {
-            val count = statement.executeUpdate("DELETE FROM `comment_list` where id=$id;")
+            val count = statement.executeUpdate("DELETE FROM `comment_list` where id='$id' and which='$which';")
             count != 0
         } catch (e: Exception) {
             e.printStackTrace()
@@ -326,36 +376,41 @@ object Dao {
     /**
      * @param token
      * @param reply_id 要回复的动态，或者一级评论的id，或者二级评论的id
-     * @param which 1回复动态 2回复一级评论 3回复二级评论
+     * @param which 0回复动态 1回复一级评论 2回复二级评论
      * @param text 要说的话
      */
     fun reply(token: Int, reply_id: Int, which: Int, text: String): Boolean {
-        val userId = getUserId(token)
-        when (which) {
-            1 -> { // 回复动态
-                val count = statement.executeUpdate("INSERT INTO `comment_list` " +
-                        "(reply_id, user_id, submit_time, text, which, reply_user_id)" +
-                        "value" +
-                        "('$reply_id', $userId, NOW(), $text, '1', '');")
-                return count != 0
+        val userId = getUserId(token) ?: return false
+        try {
+            when (which) {
+                0 -> { // 回复动态
+                    val count = statement.executeUpdate("INSERT INTO `comment_list` " +
+                            "(reply_id, user_id, submit_time, text, which, reply_user_id, reply_inner_id)" +
+                            "value" +
+                            "('$reply_id', '$userId', NOW(), '$text', '1', '', '0');")
+                    return count != 0
+                }
+                1 -> { // 回复一级评论
+                    val count = statement.executeUpdate("INSERT INTO `comment_list` " +
+                            "(reply_id, user_id, submit_time, text, which, reply_user_id, reply_inner_id)" +
+                            "value" +
+                            "('$reply_id', '$userId', NOW(), '$text', '2', '', '0');")
+                    return count != 0
+                }
+                2 -> { // 回复二级评论
+                    val count = statement.executeUpdate("INSERT INTO `comment_list` " +
+                            "(reply_id, user_id, submit_time, text, which, reply_user_id, reply_inner_id)" +
+                            "value" +
+                            "((SELECT a.reply_id from (SELECT reply_id from comment_list where which='2' and id='$reply_id')a), '$userId', NOW(), '$text', '2', (SELECT a.user_id from (SELECT user_id from comment_list where which='2' and id='$reply_id')a), '$reply_id');")
+                    return count != 0
+                }
+                else -> {
+                    return false
+                }
             }
-            2 -> { // 回复一级评论
-                val count = statement.executeUpdate("INSERT INTO `comment_list` " +
-                        "(reply_id, user_id, submit_time, text, which, reply_user_id)" +
-                        "value" +
-                        "('$reply_id', $userId, NOW(), $text, '2', '');")
-                return count != 0
-            }
-            3 -> { // 回复二级评论
-                val count = statement.executeUpdate("INSERT INTO `comment_list` " +
-                        "(reply_id, user_id, submit_time, text, which, reply_user_id)" +
-                        "value" +
-                        "('$reply_id', $userId, NOW(), $text, '2', (SELECT user_id from comment_list where which='2' and id=$reply_id));")
-                return count != 0
-            }
-            else -> {
-                return false
-            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return false
         }
     }
 

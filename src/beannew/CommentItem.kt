@@ -23,5 +23,8 @@ data class CommentItem(
         @SerializedName("avatar_url")
         val avatarUrl: String = "",
         @SerializedName("reply_list") // 只有一级评论有，二级评论没有这个，默认空
-        val replyList: List<CommentItem> = listOf()
+        val replyList: List<CommentItem> = listOf(),
+
+        @SerializedName("praise")
+        val praise: List<User> = listOf()
 )

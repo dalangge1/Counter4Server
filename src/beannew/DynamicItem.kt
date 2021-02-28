@@ -21,6 +21,9 @@ data class DynamicItem(
         val picUrl: List<String> = listOf(),
 
         @SerializedName("comment_list")
-        val commentList: List<CommentItem> = listOf()
+        val commentList: List<CommentItem> = listOf(),
+
+        @SerializedName("praise")
+        val praise: List<User> = listOf()
 
 )

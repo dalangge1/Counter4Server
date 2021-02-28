@@ -44,6 +44,7 @@ fun initSql(statement: Statement) {
                     "   `text` VARCHAR(3000) NOT NULL,\n" +                 // 内容
                     "   `which` INT UNSIGNED,\n" +                     // 1是一级评论，2是二级评论
                     "   `reply_user_id` VARCHAR(30) NOT NULL,\n" +     // 为空是普通二级评论，有则为二级评论的回复
+                    "   `reply_inner_id` INT UNSIGNED NOT NULL,\n" +
 
                     "   PRIMARY KEY ( `id`, `which` )\n" +              // 这里id自增，在which不同的情况下。也就是说一二级评论的id可以相同
                     ")ENGINE=InnoDB DEFAULT CHARSET=utf8;")
