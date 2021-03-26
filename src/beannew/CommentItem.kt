@@ -19,12 +19,12 @@ data class CommentItem(
         val replyUserNickname: String = "",
 
         @SerializedName("nickname")
-        val nickname: String = "",
+        var nickname: String = "",
         @SerializedName("avatar_url")
-        val avatarUrl: String = "",
+        var avatarUrl: String = "",
         @SerializedName("reply_list") // 只有一级评论有，二级评论没有这个，默认空
-        val replyList: List<CommentItem> = listOf(),
+        var replyList: List<CommentItem> = listOf(),
 
         @SerializedName("praise")
-        val praise: List<User> = listOf()
+        var praise: List<User> = listOf()
 )

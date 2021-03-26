@@ -3,8 +3,8 @@ package model
 import beannew.CommentItem
 import beannew.DynamicItem
 import beannew.User
+import utils.SqlConverter
 import java.lang.Exception
-import java.sql.Connection
 import java.sql.DriverManager
 import java.sql.ResultSet
 import java.sql.Statement
@@ -12,19 +12,21 @@ import java.sql.Statement
 
 object Dao {
     private const val JDBC_DRIVER = "com.mysql.cj.jdbc.Driver"
-    private const val DB_URL = "jdbc:mysql://localhost?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC"
+    const val DB_URL = "jdbc:mysql://localhost?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC"
     private const val emptyUsrPic = "https://huaban.com/img/error_page/img_404.png"
 
-    private val statement: Statement get() = conn.createStatement().apply { execute("use counter4_database;") }
-    private val conn: Connection
+    private val statement: Statement get() = DriverManager.getConnection(DB_URL, "root", "7424855920").createStatement().apply {
+        execute("CREATE DATABASE IF NOT EXISTS counter4_database DEFAULT CHARSET utf8 COLLATE utf8_general_ci;")
+
+        execute("use counter4_database;")
+    }
+//    private val conn: Connection
 
     private val loginMap = HashMap<Int, String>()
 
     init {
 
         Class.forName(JDBC_DRIVER)
-        conn = DriverManager.getConnection(DB_URL, "root", "7424855920")
-        conn.createStatement().execute("CREATE DATABASE IF NOT EXISTS counter4_database DEFAULT CHARSET utf8 COLLATE utf8_general_ci;")
 
         // 执行数据库的初始化
         initSql(statement)
@@ -58,24 +60,14 @@ object Dao {
     fun getUser(userId: String): User? {
 
         try {
-            val resultSet = statement.executeQuery("SELECT * FROM user_list WHERE user_id='$userId';")
-            while (resultSet.next()) {
-                return User(
-                        userId = resultSet.getString(1),
-                        nickname = resultSet.getString(2),
-//                        password = resultSet.getString(3),
-                        registerDate = resultSet.getTimestamp(4).time,
-                        sex = resultSet.getString(5),
-                        text = resultSet.getString(6),
-                        avatarUrl = resultSet.getString(7)
-                )
+            val list = SqlConverter.getListFromSql<User>("SELECT * FROM user_list WHERE user_id='$userId';")
+            list[0].let {
+                return it
             }
         } catch (e: Exception) {
             e.printStackTrace()
             return null
         }
-
-        return null
     }
 
     private fun getPicList(dynamicId: Int): List<String> {
@@ -227,15 +219,12 @@ object Dao {
      * 获得点赞的user列表
      */
     private fun getPraise(id: Int, which: Int): List<User> {
-        val list = ArrayList<User>()
-        val resultSet: ResultSet = statement.executeQuery("SELECT * FROM `praise_list` where id='$id' and which='$which';")
-        while (resultSet.next()) {
-            val user = getUser(resultSet.getString(2))
-            if (user != null) {
-                list.add(user)
-            }
+        val list = SqlConverter.getListFromSql<User>("SELECT * FROM `praise_list` where id='$id' and which='$which';")
+        val userList = ArrayList<User>()
+        list.forEach {
+            getUser(it.userId)?.let { it1 -> userList.add(it1) }
         }
-        return list
+        return userList
     }
 
     /**
@@ -243,43 +232,30 @@ object Dao {
      * @param replyId 被回复的id，会根据id寻找
      */
     private fun getCommentList(replyId: Int, which: Int): List<CommentItem> {
-        val list = ArrayList<CommentItem>()
+        val list: List<CommentItem>
         try {
-            val resultSet: ResultSet = statement.executeQuery("SELECT * FROM `comment_list` where reply_id='$replyId' and which='$which';")
+            list = SqlConverter.getListFromSql("SELECT * FROM `comment_list` where reply_id='$replyId' and which='$which';")
 
-            while (resultSet.next()) {
-                val user = getUser(resultSet.getString(3))
-                val praiseList = getPraise(resultSet.getInt(2), which)
-                val currentId = resultSet.getInt(2) // 当前评论的id
-                val replyList = if (which == 1) { // 获得当前评论的回复列表
-                    getCommentList(currentId, 2)
+            list.forEach {
+                val user = getUser(it.userId)
+                val praiseListT = getPraise(it.id, which)
+                val replyListT = if (which == 1) { // 获得当前评论的回复列表
+                    getCommentList(it.id, 2)
                 } else {
                     listOf()
                 }
-
-
-                list.add(
-                        CommentItem(
-                                replyId = resultSet.getInt(1),
-                                id = resultSet.getInt(2),
-                                userId = resultSet.getString(3),
-                                submitTime = resultSet.getTimestamp(4).time,
-                                text = resultSet.getString(5),
-                                nickname = user?.nickname ?: "",
-                                avatarUrl = user?.avatarUrl ?: "",
-                                which = resultSet.getInt(6),
-                                replyUserNickname = resultSet.getString(7),
-
-                                replyList = replyList,
-
-                                praise = praiseList
-                        )
-                )
+                it.apply {
+                    nickname = user?.nickname ?: ""
+                    avatarUrl = user?.avatarUrl ?: ""
+                    replyList = replyListT
+                    praise = praiseListT
+                }
 
             }
+
         } catch (e: Exception) {
             e.printStackTrace()
-            return list
+            return listOf()
         }
 
 
@@ -293,37 +269,31 @@ object Dao {
      */
     fun getAllDynamic(pos: Int, size: Int, topic: String?): List<DynamicItem>? {
 
-        val list = ArrayList<DynamicItem>()
+        val list: List<DynamicItem>
         try {
-            val resultSet: ResultSet = if (topic == null) {
-                statement.executeQuery("SELECT * FROM `dynamic_list` order by dynamic_id desc limit $pos,$size;")
+            list = if (topic.isNullOrBlank()) {
+                SqlConverter.getListFromSql("SELECT * FROM `dynamic_list` order by dynamic_id desc limit $pos,$size;")
+
             } else {
-                statement.executeQuery("SELECT * FROM `dynamic_list` where topic='$topic' order by dynamic_id desc limit $pos,$size;")
+                SqlConverter.getListFromSql("SELECT * FROM `dynamic_list` where topic='$topic' order by dynamic_id desc limit $pos,$size;")
             }
 
-            while (resultSet.next()) {
-                val user = getUser(resultSet.getString(2))
-                val picList = getPicList(resultSet.getInt(1))
-                val praiseList = getPraise(resultSet.getInt(1), 0)
-                val commentList = getCommentList(resultSet.getInt(1), 1)
-
-                list.add(
-                        DynamicItem(
-                                dynamicId = resultSet.getInt(1),
-                                userId = resultSet.getString(2),
-                                submitTime = resultSet.getTimestamp(3).time,
-                                text = resultSet.getString(4),
-                                nickname = user?.nickname ?: "",
-                                avatarUrl = user?.avatarUrl ?: "",
-                                picUrl = picList,
-
-                                commentList = commentList,
-
-                                praise = praiseList
-                        )
-                )
+            list.forEach {
+                val user = getUser(it.userId)
+                val picList = getPicList(it.dynamicId)
+                val praiseListT = getPraise(it.dynamicId, 0)
+                val commentListT = getCommentList(it.dynamicId, 1)
+                it.apply {
+                    nickname = user?.nickname ?: ""
+                    avatarUrl = user?.avatarUrl ?: ""
+                    picUrl = picList
+                    commentList = commentListT
+                    praise = praiseListT
+                }
 
             }
+
+
         } catch (e: Exception) {
             e.printStackTrace()
             return null

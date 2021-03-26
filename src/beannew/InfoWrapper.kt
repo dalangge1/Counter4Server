@@ -2,15 +2,21 @@ package beannew
 
 import com.google.gson.Gson
 import java.io.Serializable
+import javax.servlet.http.HttpServletResponse
 
 open class InfoWrapper : Serializable {
     var status: Int = 0
     var info: String = ""
 
     companion object {
-        fun newInfo(status: Int = -1, info: String = ""): String {
+        var response: HttpServletResponse? = null
+        fun setResponseObject (response: HttpServletResponse) {
+            this.response = response
+        }
+        fun newInfo(status: Int = 400, info: String = ""): String {
             return InfoWrapper().apply{
                 this.status = status
+                this@Companion.response?.status = status
                 this.info = info
             }.parseToString()
         }

@@ -8,6 +8,7 @@ import java.lang.Exception
 import javax.servlet.*
 import javax.servlet.annotation.WebServlet
 import javax.servlet.http.HttpServletRequest
+import javax.servlet.http.HttpServletResponse
 
 @WebServlet(name = "page.Counter4ServletKtSql")
 class Counter4ServletKtSql : Servlet {
@@ -21,11 +22,15 @@ class Counter4ServletKtSql : Servlet {
         servletConfig = arg0
     }
 
+
     override fun service(request: ServletRequest, response: ServletResponse) {
         val tokenGlobal = ((request as HttpServletRequest).getHeader("token") ?: null)?.toInt()?: 0
         request.characterEncoding = "UTF-8"
         response.characterEncoding = "UTF-8"
         response.contentType = "application/json;charset=UTF-8"
+
+
+        InfoWrapper.setResponseObject(response as HttpServletResponse)
         val out = response.writer
         val action = request.getParameter("action") ?: ""
 
@@ -88,7 +93,7 @@ class Counter4ServletKtSql : Servlet {
                     out.println(InfoWrapper.newInfo(info = "发送动态失败"))
                 }
                 -2 -> { // -2
-                    out.println(InfoWrapper.newInfo(info = "发送动态成功，储存图片链接失败"))
+                    out.println(InfoWrapper.newInfo(status = 200, info = "发送动态成功，储存图片链接失败"))
                 }
                 -3 -> { // -3
                     out.println(InfoWrapper.newInfo(info = "token过期"))

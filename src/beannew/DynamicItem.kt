@@ -13,17 +13,17 @@ data class DynamicItem(
         val text: String = "",
 
         @SerializedName("nickname")
-        val nickname: String = "",
+        var nickname: String = "",
         @SerializedName("avatar_url")
-        val avatarUrl: String = "",
+        var avatarUrl: String = "",
 
         @SerializedName("pic_url")
-        val picUrl: List<String> = listOf(),
+        var picUrl: List<String> = listOf(),
 
         @SerializedName("comment_list")
-        val commentList: List<CommentItem> = listOf(),
+        var commentList: List<CommentItem> = listOf(),
 
         @SerializedName("praise")
-        val praise: List<User> = listOf()
+        var praise: List<User> = listOf()
 
 )
