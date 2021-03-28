@@ -190,8 +190,13 @@ object Dao {
      * 点赞/取消点赞
      */
     fun reversePraise(token: Int, id: Int, which: Int): Boolean {
+        val userId = getUser(token)?.userId
+        if (userId.isNullOrBlank()) {
+            return false
+        }
         try {
-            val count = statement.executeUpdate("DELETE FROM `praise_list` where which='$which' and id='$id';")
+
+            val count = statement.executeUpdate("DELETE FROM `praise_list` where which='$which' and id='$id' and user_id='$userId';")
             if (count != 0) {
                 return true
             } else {
@@ -200,16 +205,12 @@ object Dao {
         } catch (e: Exception) {
             e.printStackTrace()
             // 如果没有点赞则添加点赞记录
-            try {
-                val userId = getUser(token)?.userId
-                if (userId.isNullOrBlank()) {
-                    return false
-                }
+            return try {
                 val count2 = statement.executeUpdate("INSERT INTO `praise_list` (id, user_id, which) VALUES ('$id', '$userId', '$which');")
-                return count2 != 0
+                count2 != 0
             } catch (e: Exception) {
                 e.printStackTrace()
-                return false
+                false
             }
         }
 

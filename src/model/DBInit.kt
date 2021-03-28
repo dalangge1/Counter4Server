@@ -77,7 +77,7 @@ fun initSql(statement: Statement) {
                     "   `user_id` VARCHAR(30) NOT NULL,\n" +  // 关注的用户id，用分号分割
                     "   `which` INT UNSIGNED,\n" +            // 0是动态，1是一级评论，2是二级评论
 
-                    "   PRIMARY KEY ( `id`, `which`)\n" +
+                    "   PRIMARY KEY ( `id`, `which`, `user_id`)\n" +
                     ")ENGINE=InnoDB DEFAULT CHARSET=utf8;")
 
 
