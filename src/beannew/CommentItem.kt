@@ -16,7 +16,7 @@ data class CommentItem(
         @SerializedName("which")
         val which: Int = 0,
         @SerializedName("reply_user_nickname")
-        val replyUserNickname: String = "",
+        var replyUserNickname: String = "",
 
         @SerializedName("nickname")
         var nickname: String = "",
@@ -26,5 +26,7 @@ data class CommentItem(
         var replyList: List<CommentItem> = listOf(),
 
         @SerializedName("praise")
-        var praise: List<User> = listOf()
+        var praise: List<User> = listOf(),
+        @SerializedName("reply_user_id")
+        var replyUserId: String = ""
 )

@@ -8,7 +8,7 @@ data class User(
         @SerializedName("nickname")
         val nickname: String = "",
         @SerializedName("password")
-        val password: String = "",
+        var password: String = "",
         @SerializedName("register_date")
         val registerDate: Long = 0L,
         @SerializedName("sex")

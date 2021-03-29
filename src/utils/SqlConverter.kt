@@ -34,6 +34,15 @@ class SqlConverter {
             return list
         }
 
+        inline fun <reified T> getFirstFromSql(sqlCommand: String): T? {
+            val rs = statement.executeQuery(sqlCommand)
+            var t: T? = null
+            while (rs.next()) {
+                t = convert(rs, T::class.java)
+            }
+            return t
+        }
+
 
         fun <T> convert(rs: ResultSet, clazz: Class<T>): T {
             val rsMeta = rs.metaData

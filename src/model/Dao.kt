@@ -62,7 +62,7 @@ object Dao {
         try {
             val list = SqlConverter.getListFromSql<User>("SELECT * FROM user_list WHERE user_id='$userId';")
             list[0].let {
-                return it
+                return it.apply { password = "" }
             }
         } catch (e: Exception) {
             e.printStackTrace()
@@ -250,6 +250,9 @@ object Dao {
                     avatarUrl = user?.avatarUrl ?: ""
                     replyList = replyListT
                     praise = praiseListT
+                    if (which == 2 && replyUserId.isNotBlank()) {
+                        replyUserNickname = getUser(replyUserId)?.nickname?: ""
+                    }
                 }
 
             }
